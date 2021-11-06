@@ -153,11 +153,12 @@ void send_id() {
   //  Serial.println("user id = " + user_id);
   //  String path = user_id + "/" + req + "/kku";
   //  Serial.print(path);
+  String path1 = WiFi.macAddress();
   if (client.connect("umbrellashareserver.herokuapp.com", 80)) {
     Serial.println("can do it");
     Serial.println("connected");
     Serial.println("[Sending a request]");
-    client.print(String("GET /getstt/kku") + " HTTP/1.1\r\n" +
+    client.print(String("GET /getstt/") + path1 + " HTTP/1.1\r\n" +
                  "Host: " + "umbrellashareserver.herokuapp.com" + "\r\n" +
                  "Connection: keep-alive\r\n\r\n"
                 );
@@ -195,12 +196,14 @@ void send_id() {
         if (line == "dd") {
           Serial.println("Deposite");
           check_stt = "dd";
+          Serial.println("user : " + user);
           delete_status();
           //          servo_control(check_stt);
         }
         if (line == "dg") {
           Serial.println("Deposite Getting");
           check_stt = "dg";
+          Serial.println("user : " + user);
           delete_status();
           //          servo_control(check_stt);
         }
@@ -225,11 +228,12 @@ void delete_status() {
   servo_control(check_stt);
   WiFiClient client;
   HTTPClient http;
+  String path2 = WiFi.macAddress();
   if (client.connect("umbrellashareserver.herokuapp.com", 80)) {
     Serial.println("can do it");
     Serial.println("connected");
     Serial.println("[Sending a request]");
-    client.print(String("GET /delete_stt/kku") + " HTTP/1.1\r\n" +
+    client.print(String("GET /delete_stt/")+ path2 + " HTTP/1.1\r\n" +
                  "Host: " + "umbrellashareserver.herokuapp.com" + "\r\n" +
                  "Connection: keep-alive\r\n\r\n"
                 );
@@ -284,19 +288,6 @@ void servo_control(String c_stt) {
         umbrella_read(i);
         break;
         delay(10000); // One second delay
-        //
-        //        digitalWrite(dirPin, LOW); //Changes the rotations direction
-        //        // Makes 400 pulses for making two full cycle rotation
-        //        for (int x = 1; x <= ro_deg; x++) {
-        //          digitalWrite(stepPin, HIGH);
-        //          delay(1);
-        //          digitalWrite(stepPin, LOW);
-        //          delay(1);
-        //        }
-        //        delay(20);
-        //        bStatus[i] = 1;
-        //        //        myservo.write(180);
-        //        break;
       }
     }
   }
@@ -305,12 +296,6 @@ void servo_control(String c_stt) {
     for (int j = 0; j < 8; j++) {
       Serial.println(bStatus[j]);
       if (bStatus[j] == 1) {
-        //        Serial.println("aaa = " + bStatus[i]);
-        //        Serial.println("bbb = " + myArray[i]);
-        //        rotate = myArray[i];
-        //        Serial.println("rotate = " + rotate);
-        //        myservo.write(myArray[j]);
-        //        Serial.println("rotate = " + myArray[j]);
         Serial.println(myArray[j]);
         delay(5000);
         digitalWrite(dirPin, HIGH); // Enables the motor to move in a particular direction
@@ -325,26 +310,75 @@ void servo_control(String c_stt) {
         umbrella_read(j);
         break;
         delay(10000); // One second delay
-
-        //        digitalWrite(dirPin, LOW); //Changes the rotations direction
-        //        // Makes 400 pulses for making two full cycle rotation
-        //        for (int x = 1; x <= ro_deg; x++) {
-        //          digitalWrite(stepPin, HIGH);
-        //          delay(1);
-        //          digitalWrite(stepPin, LOW);
-        //          delay(1);
-        //        }
-        //        //        umbrella_read();
-        //        delay(2000);
-        //        bStatus[j] = 0;
-        //        //        myservo.write(180);
-        //        break;
       }
     }
   }
   else if (c_stt == "dd") {
+    Serial.println("rotate = dd");
+    for (int k = 5; k < 8; k++) {
+      Serial.println(bStatus[k]);
+      if (bStatus[k] == 0) {
+        Serial.println(myArray[k]);
+        delay(5000);
+        digitalWrite(dirPin, HIGH); // Enables the motor to move in a particular direction
+        // Makes 200 pulses for making one full cycle rotation
+        int ro_deg = myArray[k] / 1.8;
+        for (int x = 1; x <= ro_deg; x++) {
+          digitalWrite(stepPin, HIGH);
+          delay(1);
+          digitalWrite(stepPin, LOW);
+          delay(1);
+        }
+        deposit_umbrella(k);
+        int user1 = user.toInt();
+        bStatus[k] = user1;
+        digitalWrite(dirPin, LOW); //Changes the rotations direction
+        // Makes 400 pulses for making two full cycle rotation
+        for (int y = 1; y <= ro_deg; y++) {
+          digitalWrite(stepPin, HIGH);
+          delay(1);
+          digitalWrite(stepPin, LOW);
+          delay(1);
+        }
+        //        umbrella_read();
+        delay(2000);
+        break;
+        delay(10000); // One second delay
+      }
+    }
   }
   else if (c_stt == "dg") {
+    Serial.println("rotate = dg");
+    for (int l = 5; l < 8; l++) {
+      Serial.println(bStatus[l]);
+      if (bStatus[l] == user.toInt()) {
+        Serial.println(myArray[l]);
+        delay(5000);
+        digitalWrite(dirPin, HIGH); // Enables the motor to move in a particular direction
+        // Makes 200 pulses for making one full cycle rotation
+        int ro_deg = myArray[l] / 1.8;
+        for (int x = 1; x <= ro_deg; x++) {
+          digitalWrite(stepPin, HIGH);
+          delay(1);
+          digitalWrite(stepPin, LOW);
+          delay(1);
+        }
+        return_umbrella(l);
+        bStatus[l] = 0;
+        digitalWrite(dirPin, LOW); //Changes the rotations direction
+        // Makes 400 pulses for making two full cycle rotation
+        for (int y = 1; y <= ro_deg; y++) {
+          digitalWrite(stepPin, HIGH);
+          delay(1);
+          digitalWrite(stepPin, LOW);
+          delay(1);
+        }
+        //        umbrella_read();
+        delay(2000);
+        break;
+        delay(10000); // One second delay
+      }
+    }
   }
   else {
     Serial.println(".");
@@ -449,7 +483,6 @@ void umbrella_read(int j) {
     client.stop();
   }
   //  servo_control(check_stt);
-
 }
 
 void borrow_umbrella(String um_id) {
@@ -466,7 +499,7 @@ void borrow_umbrella(String um_id) {
 
   String umbrella_id = um_id;
   String user_id = user;
-  String borrow_place = "kku";
+  String borrow_place = WiFi.macAddress();
   String borrow_time = myTime;
   String getting_place = "none";
   String getting_time = "0";
@@ -523,7 +556,7 @@ void getting_umbrella(String um_id) {
 
   String umbrella_id = um_id;
   String user_id = user;
-  String getting_place = "KKU";
+  String getting_place = WiFi.macAddress();
   String getting_time = myTime;
   String b_status = "got";
   String path = user_id + "/" + umbrella_id + "/" + getting_time + "/" + getting_place + "/" + b_status;
@@ -563,6 +596,118 @@ void getting_umbrella(String um_id) {
   um_stt = "";
   delete_realtime();
 
+}
+
+void deposit_umbrella(int locker) {
+  //  time_stamp
+  timeClient.update();
+  secondNow = timeClient.getSeconds();
+  minuteNow = timeClient.getMinutes();
+  hourNow = timeClient.getHours();
+  String day = daysOfTheWeek[timeClient.getDay()];
+  String currentTimestamp = "date:" + day + " time:" + String(hourNow) + "." + String(minuteNow);
+  myTime = String(hourNow) + "." + String(minuteNow);
+  Serial.println(myTime);
+  delay(2000);
+
+  //  String locker = locker;
+  String user_id = user;
+  String deposit_place = WiFi.macAddress();
+  String deposit_time = myTime;
+  String return_place = "none";
+  String return_time = "0";
+  String d_status = "depositing";
+  String path = user_id + "/" + locker + "/" + deposit_time + "/" + deposit_place + "/" + return_time + "/" + return_place + "/" + d_status;
+  Serial.println(path);
+
+  WiFiClient client;
+  HTTPClient http;
+  if (client.connect("umbrellashareserver.herokuapp.com", 80)) {
+    Serial.println("can do it");
+    Serial.println("connected");
+    Serial.println("[Sending a request]");
+    client.print(String("GET /deposit/") + path + " HTTP/1.1\r\n" +
+                 "Host: " + "umbrellashareserver.herokuapp.com" + "\r\n" +
+                 "Connection: keep-alive\r\n\r\n"
+                );
+    //    client.print(_str);
+    Serial.println("[Response:]");
+    int httpCode = http.GET();
+    Serial.println(httpCode);
+    while (client.connected() || client.available())
+    {
+      if (client.available())
+      {
+        String line = client.readStringUntil('\n');
+        Serial.println(line);
+        client.stop();
+      }
+      client.stop();
+      Serial.println("\n[Disconnected]");
+    }
+  }
+  else
+  {
+    Serial.println("connection failed!");
+    client.stop();
+  }
+  //  um_stt = "";
+  delete_realtime();
+}
+
+void return_umbrella(int locker) {
+  //  time_stamp
+  timeClient.update();
+  secondNow = timeClient.getSeconds();
+  minuteNow = timeClient.getMinutes();
+  hourNow = timeClient.getHours();
+  String day = daysOfTheWeek[timeClient.getDay()];
+  String currentTimestamp = "date:" + day + " time:" + String(hourNow) + "." + String(minuteNow);
+  myTime = String(hourNow) + "." + String(minuteNow);
+  Serial.println(myTime);
+  delay(2000);
+
+  //  String locker = locker;
+  String user_id = user;
+  String return_place = WiFi.macAddress();
+  String return_time = myTime;
+  String d_status = "returned";
+  String path = user_id + "/" + locker + "/" + return_time + "/" + return_place + "/" + d_status;
+  Serial.println(path);
+
+  WiFiClient client;
+  HTTPClient http;
+  if (client.connect("umbrellashareserver.herokuapp.com", 80)) {
+    Serial.println("can do it");
+    Serial.println("connected");
+    Serial.println("[Sending a request]");
+    client.print(String("GET /getdeposit/") + path + " HTTP/1.1\r\n" +
+                 "Host: " + "umbrellashareserver.herokuapp.com" + "\r\n" +
+                 "Connection: keep-alive\r\n\r\n"
+                );
+    //    client.print(_str);
+    Serial.println("[Response:]");
+    int httpCode = http.GET();
+    Serial.println(httpCode);
+    while (client.connected() || client.available())
+    {
+      if (client.available())
+      {
+        String line = client.readStringUntil('\n');
+        Serial.println(line);
+        client.stop();
+      }
+      client.stop();
+      Serial.println("\n[Disconnected]");
+    }
+  }
+  else
+  {
+    Serial.println("connection failed!");
+    client.stop();
+  }
+  //  um_stt = "";
+  delete_realtime();
 }
 
 void delete_realtime() {
